@@ -59,3 +59,7 @@ for i in range(n):
     koef = learning_rate / (i + 1)
     indeces = np.random.randint(n_objects, size=batch)
     w -= 2 * koef * X[indeces].T @ (X[indeces] @ w - Y[indeces]) / batch
+
+def expected_value():
+    def a():
+        pass

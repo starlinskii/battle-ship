@@ -3,13 +3,11 @@ from enum import Enum
 from collections import namedtuple
 from random import seed, shuffle
 from itertools import product
-import sys
-from sys import exit
-sys.breakpointhook = exit
+import random
 
 seed(1)
 
-Piece = namedtuple('Piece', 'name size')
+Piece = namedtuple('Piece', ['name', 'size'])
 
 class Ship(Enum):
     Ship2 = Piece('destroyer', 2)
@@ -22,6 +20,8 @@ class Ship(Enum):
     @property
     def name(self):
         return self.value.name
+    
+allow_ships = {Ship.Ship2, Ship.Ship4}
 
 @dataclass(frozen=True)
 class Miss:
@@ -34,6 +34,20 @@ class Hit:
 @dataclass(frozen=True)
 class Sinking(Hit):
     pass
+
+
+def check_and_place(cord, ship, field, ships):
+    x, y = cord
+    if (x + ship.size >= len(field)): return 0
+    for i in range(ship.size):
+        for dx, dy in product((-1, 0, 1), repeat=2):
+            if not (0 <= x + dx + i < len(field) and 0 <= y + dy < len(field[0])): continue
+            if (field[x + dx + i][y + dy] != 0): return 0
+    for i in range(ship.size):
+        field[x + i][y] = 1
+    ships[ship] = {(x + i, y) for i in range(ship.size)}
+    return 1
+
 
 
 @dataclass
@@ -51,12 +65,20 @@ class Board:
 
     @classmethod
     def from_random(cls, *, size=(9, 9), pieces=frozenset({*Ship})):
-        ships = {
-            Ship.Ship4: {(0, 4), (1, 4), (2, 4), (3, 4)}, 
-            Ship.Ship2: {(8, 7), (8, 8)}, 
-        }
+        targets = [*product(range(size[0]), range(size[1]))]
+        field = [[0 for i in range(size[0])] for j in range(size[1])]
+        shuffle(targets)
+        tgt = allow_ships.copy()
+        ships = {}
+        for ship in tgt:
+            for cord in targets:
+                if check_and_place(cord, ship, field, ships) != 0:
+                    break
+        print(ships)
         return cls(ships=ships, size=size)
     
+
+                
     @property
     def active_ships(self):
         return {ship for ship, hits in self.state.items() if len(hits) < ship.size}
@@ -68,9 +90,6 @@ class Board:
             return (Sinking if len(self.state[ship]) == ship.size else Hit)(ship)        
         return Miss()
         
-
-# def fire_at_the_same_spot(_):
-#     return (0, 0)
 
 @lambda coro: lambda *a, **kw: [ci := coro(*a, **kw), next(ci), ci.send][-1]
 def random_fire(board):
@@ -95,6 +114,42 @@ def random_fire(board):
                     if isinstance(result, Hit) and not isinstance(result, Sinking):
                         ...
 
+def calculate_probabilities(board):
+    targets = [*product(range(board.size[0]), range(board.size[1]))]
+    calculate_board = [[0 for _ in range(board.size[0])] for __ in range(board.size[1])]
+    for ship in board.active_ships:
+        cnt_of_vars = 0
+        for basex, basey in targets:
+
+            if len(board.state[ship]) >= 2:
+                ...
+            elif len(board.state[ship]) == 1:
+                ...
+            else:
+                for xadj, yadj in [(0, ship.size), (ship.size, 0)]:
+                    if not (0 <= basex + xadj < board.size[0]):break
+                    if not (0 <= basey + yadj < board.size[1]):break
+                    for i in range(xadj):
+                        for j in range(yadj):
+                            if ((basex + i, basey + j) not in targets):
+                                flag = True
+                                flag |= checkcells()
+                                ...
+                    calculate_board[basex][basey] = max(1 / cnt_of_vars, calculate_board, calculate_board[basex][basey])
+
+                    
+                    
+
+                    
+
+                    
+def checkcells(board, x, y, place):
+    ...
+
+@lambda coro: lambda *a, **kw: [ci := coro(*a, **kw), next(ci), ci.send][-1]
+def smart_fire(board):
+    calculate_probabilities(board)
+
 
 
 if __name__ == '__main__':
@@ -107,7 +162,8 @@ if __name__ == '__main__':
     # strategy = fire_at_the_same_spot
     result_a, result_b = None, None
     while board_a.active_ships and board_b.active_ships:
-        
+        #print(board_a.state)
+        #print(board_a.layout)
         shot = strategy_a(result_a)
         result = result_a = board_b.strike(shot)
 
