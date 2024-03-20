@@ -5,14 +5,21 @@ from random import seed, shuffle
 from itertools import product
 import random
 
-seed(1)
+seed(random)
 
-Piece = namedtuple('Piece', ['name', 'size'])
+Piece = namedtuple('Piece', ['name', 'size', 'order'])
 
 class Ship(Enum):
-    Ship2 = Piece('destroyer', 2)
-    Ship4 = Piece('battleship', 4)
-    
+    Boat1 = Piece('boat', 1, 1)
+    Boat2 = Piece('boat', 1, 2)
+    Boat3 = Piece('boat', 1, 3)
+    Boat4 = Piece('boat', 1, 4)
+    destroyer1 = Piece('destroyer', 2, 1)
+    destroyer2 = Piece('destroyer', 2, 2)
+    destroyer3 = Piece('destroyer', 2, 3)
+    battleship = Piece('battleship', 4, 1)
+    carrier = Piece('carrier', 5, 1)
+
     @property
     def size(self):
         return self.value.size
@@ -21,7 +28,7 @@ class Ship(Enum):
     def name(self):
         return self.value.name
     
-allow_ships = {Ship.Ship2, Ship.Ship4}
+ships_list = [Ship.destroyer1, Ship.destroyer2, Ship.destroyer3, Ship.Boat1, Ship.Boat2, Ship.Boat3, Ship.Boat4, Ship.battleship, Ship.carrier]
 
 @dataclass(frozen=True)
 class Miss:
@@ -38,16 +45,23 @@ class Sinking(Hit):
 
 def check_and_place(cord, ship, field, ships):
     x, y = cord
-    if (x + ship.size >= len(field)): return 0
+    kx = random.randint(0, 1)
+    ky = 1 - kx
+    if (x + ship.size >= len(field) and y + ship.size >= len(field)): return 0
+    
+    if (x + ship.size >= len(field)):
+        kx, ky = 0, 1
+    if (y + ship.size >= len(field)):
+        kx, ky = 1, 0
+
     for i in range(ship.size):
         for dx, dy in product((-1, 0, 1), repeat=2):
-            if not (0 <= x + dx + i < len(field) and 0 <= y + dy < len(field[0])): continue
-            if (field[x + dx + i][y + dy] != 0): return 0
+            if not (0 <= x + dx + i*kx < len(field) and 0 <= y + dy + i*ky < len(field[0])): continue
+            if (field[x + dx + i*kx][y + dy + i*ky] != 0): return 0
     for i in range(ship.size):
-        field[x + i][y] = 1
-    ships[ship] = {(x + i, y) for i in range(ship.size)}
+        field[x + i*kx][y + i*ky] = 1
+    ships[ship] = {(x + i*kx, y + i*ky) for i in range(ship.size)}
     return 1
-
 
 
 @dataclass
@@ -68,17 +82,17 @@ class Board:
         targets = [*product(range(size[0]), range(size[1]))]
         field = [[0 for i in range(size[0])] for j in range(size[1])]
         shuffle(targets)
-        tgt = allow_ships.copy()
+        tgt = ships_list.copy()
         ships = {}
         for ship in tgt:
             for cord in targets:
                 if check_and_place(cord, ship, field, ships) != 0:
                     break
-        print(ships)
+        #print(ships, end='\n\n\n')
         return cls(ships=ships, size=size)
-    
 
-                
+
+
     @property
     def active_ships(self):
         return {ship for ship, hits in self.state.items() if len(hits) < ship.size}
@@ -111,54 +125,81 @@ def random_fire(board):
                 if tgt not in history:
                     history.add(tgt)
                     result = yield tgt
-                    if isinstance(result, Hit) and not isinstance(result, Sinking):
-                        ...
+                    
 
-def calculate_probabilities(board):
-    targets = [*product(range(board.size[0]), range(board.size[1]))]
-    calculate_board = [[0 for _ in range(board.size[0])] for __ in range(board.size[1])]
+def calculate_probabilities(board, targets):
+    calculate_board = [[0 for _ in range(board.size[1])] for __ in range(board.size[0])]
     for ship in board.active_ships:
         cnt_of_vars = 0
         for basex, basey in targets:
 
-            if len(board.state[ship]) >= 2:
-                ...
-            elif len(board.state[ship]) == 1:
-                ...
-            else:
-                for xadj, yadj in [(0, ship.size), (ship.size, 0)]:
+            # if len(board.state[ship]) >= 2:
+            #     ...
+            # elif len(board.state[ship]) == 1:
+            #     ...
+            # else:
+                for xadj, yadj in [(1, ship.size), (ship.size, 1)]:
                     if not (0 <= basex + xadj < board.size[0]):break
                     if not (0 <= basey + yadj < board.size[1]):break
-                    for i in range(xadj):
-                        for j in range(yadj):
+                    flag = False
+                    for i in range(xadj + 1):
+                        for j in range(yadj + 1):
+                            flag |= checkcells(board, basex + i, basey + j)
                             if ((basex + i, basey + j) not in targets):
                                 flag = True
-                                flag |= checkcells()
-                                ...
-                    calculate_board[basex][basey] = max(1 / cnt_of_vars, calculate_board, calculate_board[basex][basey])
+                    if (flag): continue
+                    for i in range(xadj):
+                        for j in range(yadj):
+                            calculate_board[basex + i][basey + j] += 1
+                            if (ship.size == 1):
+                                calculate_board[basex + i][basey + j] -= 0.5
+    ans = -1, -1
+    probability = -1
+    for i in range(board.size[0]):
+        for j in range(board.size[1]):
+            if (calculate_board[i][j] > probability and (i, j) in targets):
+                probability = calculate_board[i][j]
+                ans = i, j
+    if (ans != (-1, -1)):
+        print(ans)
+        print(targets)
+        targets.remove(ans)
+        print(targets)
+    return ans
+                    
+def checkcells(board, x, y):
+    ans = False
+    for dx, dy in product([-1, 0, 1], repeat=2):
+        if not (0 <= x + dx < board.size[0]): continue
+        if not (0 <= y + dy < board.size[1]): continue
+        if ((x + dx, y + dy) in board.layout and (x + dx, y + dy) in board.state[board.layout[(x + dx, y + dy)]]):
+            ans = True
+    return ans
 
-                    
-                    
-
-                    
-
-                    
-def checkcells(board, x, y, place):
-    ...
 
 @lambda coro: lambda *a, **kw: [ci := coro(*a, **kw), next(ci), ci.send][-1]
 def smart_fire(board):
-    calculate_probabilities(board)
+    targets = set()
+    for x, y in [*product(range(board.size[0]), range(board.size[1]))]:
+        targets.add((x, y))
+    result = yield
+    while len(targets) > 0:
+        tgt = calculate_probabilities(board, targets)
+        print(tgt)
+
+        result = yield tgt
 
 
 
 if __name__ == '__main__':
-    
     board_a = Board.from_random()
     board_b = Board.from_random()
     
-    strategy_a = random_fire(board_b)
+    strategy_a = smart_fire(board_b)
     strategy_b = random_fire(board_a)
+    print(strategy_a)
+    print()
+    print(strategy_b)
     # strategy = fire_at_the_same_spot
     result_a, result_b = None, None
     while board_a.active_ships and board_b.active_ships:
