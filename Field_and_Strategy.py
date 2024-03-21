@@ -232,9 +232,9 @@ def getrange(tgt):
 def calculate_probabilities(board, targets):
     calculate_board = [[0 for _ in range(board.size[1])] for __ in range(board.size[0])]
     for ship in board.active_ships:
+        tgt = []
         #############################################################################
         if len(board.state[ship]) >= 2:
-            tgt = []
             oriental = define_oriental(board.state[ship])
             result = getrange(board.state[ship])
             
@@ -264,16 +264,10 @@ def calculate_probabilities(board, targets):
                     if (flag): continue
                     for i in range(ship.size):
                         tgt.append((result[0][0], starty + i))
-            total = len(tgt)
-            if total == 0: continue #???#
-            for pos in tgt:
-               for x, y in pos:
-                   calculate_board[x][y] += 1/total
         #############################################################################        
         elif len(board.state[ship]) == 1:
             x, y = board.state[ship].pop()
             board.state[ship].add((x, y))
-            tgt = []
             for startx in range(x - ship.size + 1, x + 1):
                 if not (0 <= startx < board.size[0]): break
                 if not (0 <= startx + ship.size <= board.size[0]): break
@@ -297,15 +291,8 @@ def calculate_probabilities(board, targets):
                 if (flag): continue
                 for i in range(ship.size):
                     tgt.append((x, starty + i))
-            
-            total = len(tgt)
-            if total == 0: continue #???#
-            for pos in tgt:
-               for x, y in pos:
-                   calculate_board[x][y] += 1/total
         #############################################################################
         else:
-            tgt = []
             for basex, basey in targets:
                 for xadj, yadj in [(1, ship.size), (ship.size, 1)]:
                     if not (0 <= basex + xadj <= board.size[0]): break
@@ -320,16 +307,10 @@ def calculate_probabilities(board, targets):
                     for i in range(xadj):
                         for j in range(yadj):
                             tgt.append((basex + i, basey + j))
-                            #calculate_board[basex + i][basey + j] += 1
-                            # if (ship.size == 1):
-                            #     calculate_board[basex + i][basey + j] -= 0.5
-                if (ship.size == 1 and len(tgt) != 0):
-                    tgt.pop()
-            total = len(tgt)
-            if total == 0: continue #???#
-            for pos in tgt:
-                x, y = pos
-                calculate_board[x][y] += 1/total
+        total = len(tgt)
+        for pos in tgt:
+            x, y = pos
+            calculate_board[x][y] += 1/total
         #############################################################################
     ans = -1, -1
     probability = -1
@@ -371,13 +352,12 @@ if __name__ == '__main__':
     #board_player = Board.set_ship()
     board_computer = Board.from_random()
 
-    # print('Do you want to play versus advance comupter?')
-    # print('print 1 if yes')
-    # print('print 0 if no')
-    # strategy = int(input())
-
-    # strategy = {random_fire(board_player), smart_fire(board_player)}
-    strategy_a = smart_fire(board_player)
+    print('Do you want to play versus advance comupter?')
+    print('print 1 if yes')
+    print('print 0 if no')
+    var = int(input())
+    strategy = [random_fire, smart_fire]
+    strategy_a = strategy[var](board_player)
     strategy_b = random_fire(board_computer)
     result_a, result_b = None, None
     while board_computer.active_ships and board_player.active_ships:
@@ -402,6 +382,8 @@ if __name__ == '__main__':
                 print(f'B: sunk {result.ship}')
         
     if board_computer.active_ships:
-        print('A won!')
+        print('Computer won!')
     elif board_player.active_ships:
-        print('B won!')
+        print('You won!')
+    else:
+        print('Draw!')
