@@ -22,7 +22,7 @@ def play():
 
     var = input()
     while (var != '0' and var != '1'):
-        print('Please, enter correct orientation')
+        print('Please, enter correct answer')
         var = input()
     strategy = [strategies_prefomancer.random_fire, strategies_prefomancer.smart_fire]
     strategy_a = strategy[int(var)](board_player)
