@@ -25,6 +25,7 @@ def getrange(tgt):
         maxy = max(y, maxy)
     return ((minx, miny), (maxx, maxy))
 
+#check the cell and every cells around it
 def checkcells(board, x, y):
     ans = False
     for dx, dy in product([-1, 0, 1], repeat=2):
@@ -34,6 +35,7 @@ def checkcells(board, x, y):
             ans = True
     return ans
 
+#the main function for advance strategy : it calculates probability
 def calculate_probabilities(board, targets):
     calculate_board = [[0 for _ in range(board.size[1])] for __ in range(board.size[0])]
     for ship in board.active_ships:

@@ -1,7 +1,13 @@
 from headers import *
-from Field_and_Strategy import *
+from utils import *
+from Field import Board
+from Strategy import strategies_prefomancer
+from Ship_States import *
+from Player import player_interface
 
-if __name__ == '__main__':
+#the main core of the game
+def play():
+    global static_field
     for i in range(len(static_field)):
         for j in range(len(static_field[i])):
             print(str(static_field[i][j]), end='')
@@ -14,11 +20,15 @@ if __name__ == '__main__':
     print('print 1 if yes')
     print('print 0 if no')
 
-    var = int(input())
+    var = input()
+    while (var != '0' and var != '1'):
+        print('Please, enter correct orientation')
+        var = input()
     strategy = [strategies_prefomancer.random_fire, strategies_prefomancer.smart_fire]
-    strategy_a = strategy[var](board_player)
+    strategy_a = strategy[int(var)](board_player)
     result_a, result_b = None, None
-    
+    history = set()
+
     while board_computer.active_ships and board_player.active_ships:
         shot = strategy_a(result_a)
         result = result_a = board_player.strike(shot)
@@ -30,7 +40,6 @@ if __name__ == '__main__':
             if isinstance(result, Sinking):
                 print(f'A: sunk {result.ship.name}')
         
-        history = set()
         shot = player_interface.fire(board_computer, history)
         result = result_b = board_computer.strike(shot)
 
