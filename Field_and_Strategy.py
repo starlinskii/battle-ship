@@ -85,7 +85,7 @@ def check_and_place(cord, ship, field, ships):
     x, y = cord
     kx = random.randint(0, 1)
     ky = 1 - kx
-    if (x + ship.size >= len(field) and y + ship.size >= len(field)): return 0
+    if (x + ship.size >= len(field) and y + ship.size >= len(field)): return False
     
     if (x + ship.size >= len(field)):
         kx, ky = 0, 1
@@ -348,8 +348,8 @@ if __name__ == '__main__':
         for j in range(len(static_field[i])):
             print(str(static_field[i][j]), end='')
         print()
-    board_player = Board.from_random()
-    #board_player = Board.set_ship()
+    
+    board_player = Board.set_ship()
     board_computer = Board.from_random()
 
     print('Do you want to play versus advance comupter?')
