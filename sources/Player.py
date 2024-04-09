@@ -1,4 +1,4 @@
-from headers import *
+from include.headers import *
 from utils import player_fire, watch_field
 
 class player_interface:

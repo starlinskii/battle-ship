@@ -1,5 +1,5 @@
 from utils import check_and_place
-from headers import *
+from include.headers import *
 from Ships import Ship, ships_list
 from Player import player_interface
 from Ship_States import *

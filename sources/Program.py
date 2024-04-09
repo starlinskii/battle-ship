@@ -1,4 +1,4 @@
-from headers import *
+from include.headers import *
 from utils import *
 from Field import Board
 from Strategy import strategies_prefomancer

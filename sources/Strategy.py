@@ -1,6 +1,6 @@
 from Advance_Strategy import calculate_probabilities
 from Ship_States import *
-from headers import *
+from include.headers import *
 
 class strategies_prefomancer:
     #random strategy

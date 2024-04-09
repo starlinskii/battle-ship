@@ -1,4 +1,4 @@
-from headers import *
+from include.headers import *
 
 Piece = namedtuple('Piece', ['name', 'size', 'order'])
 

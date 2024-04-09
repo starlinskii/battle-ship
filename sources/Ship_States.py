@@ -1,4 +1,4 @@
-from headers import *
+from include.headers import *
 from Ships import Ship
 
 @dataclass(frozen=True)
